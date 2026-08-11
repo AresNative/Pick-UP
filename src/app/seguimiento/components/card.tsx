@@ -9,7 +9,7 @@ import { formatValue } from "@/utils/constants/format-values";
 import { IconLiz } from "@/app/productos/components/ionc-liz";
 
 import ModalProd from "@/app/productos/components/modal-product";
-import { useGetWithFiltersGeneralMutation } from "@/hooks/reducers/api";
+import { useGetWithFiltersMutation } from "@/hooks/reducers/api";
 import { EnvConfig } from "@/utils/constants/env.config";
 
 interface ProductCardProps {
@@ -20,7 +20,7 @@ const { hubs: apiUrl } = EnvConfig();
 const Card: React.FC<ProductCardProps> = ({ producto }) => {
     const [isFavorite, setIsFavorite] = useState(false);
     const [image, setImage] = useState("");
-    const [getWithFilter] = useGetWithFiltersGeneralMutation();
+    const [getWithFilter] = useGetWithFiltersMutation();
 
     const isLowStock = producto.cantidad > 0 && producto.cantidad <= 10;
     const isOutOfStock = producto.cantidad <= 0;

@@ -28,16 +28,13 @@ import {
     Shield, CreditCard, History, Star
 } from "lucide-react";
 import { PageProps } from "@/utils/types/page";
-import { IconLiz } from "../productos/components/ionc-liz";
-import { useAppSelector } from "@/hooks/selector";
-import { RootState } from "@/hooks/store";
 import { useHistory } from "react-router";
 import { formatValue } from '@/utils/constants/format-values';
 
 // API hooks
 import {
-    useGetWithFiltersGeneralMutation,
-    usePutMutation
+    useGetWithFiltersMutation,
+    usePutGeneralMutation
 } from "@/hooks/reducers/api";
 
 // Auth hooks
@@ -53,7 +50,6 @@ import {
 import { safeCall } from "@/hooks/use-debounce";
 import { BentoGrid, BentoItem } from "@/components/bento-grid";
 import Badge from "@/components/badge";
-import { cn } from "@/utils/functions/cn";
 import MainForm from "@/components/form/main-form";
 import { LogInField } from "@/utils/constants/forms/logIn";
 
@@ -77,8 +73,8 @@ interface ResumenData {
 }
 
 const PerfilPage: React.FC<PageProps> = ({ onScroll }: PageProps) => {
-    const [getDataUserPerfil] = useGetWithFiltersGeneralMutation();
-    const [putDataUserPerfil] = usePutMutation();
+    const [getDataUserPerfil] = useGetWithFiltersMutation();
+    const [putDataUserPerfil] = usePutGeneralMutation();
     const [logoutUser] = useLogoutUserMutation();
 
     const [dataUser, setDataUser] = useState<UserData>({});

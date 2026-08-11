@@ -23,16 +23,6 @@ export function CheckOutField(): Field[] {
                         icon: <User />,
                         valueDefined: userData ? userData.Nombre : "",
                     },
-                    {
-                        id: 1,
-                        type: "INPUT",
-                        name: "APELLIDOS",
-                        label: "Apellido(s)",
-                        placeholder: "Apellido(s)",
-                        require: false,
-                        icon: <User />,
-                        valueDefined: userData ? userData.APELLIDOS : "",
-                    },
                 ]
         },
         {

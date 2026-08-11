@@ -17,7 +17,7 @@ import {
     cube
 } from "ionicons/icons";
 import { useCallback, useEffect, useState } from "react";
-import { useGetWithFiltersGeneralMutation, usePutGeneralMutation } from "@/hooks/reducers/api";
+import { useGetWithFiltersMutation, usePutGeneralMutation } from "@/hooks/reducers/api";
 import { getLocalStorageItem } from "@/utils/functions/local-storage";
 import { formatValue } from "@/utils/constants/format-values";
 import { ShoppingCart, MoveRight, AlertTriangle, Package, CheckCircle2, Clock, RefreshCw, XCircle, CheckCheck, Cuboid, MessageCircle } from "lucide-react";
@@ -30,7 +30,7 @@ import Card from "./components/card";
 
 const Seguimiento: React.FC<PageProps> = ({ onScroll }: PageProps) => {
 
-    const [getWithFilter] = useGetWithFiltersGeneralMutation();
+    const [getWithFilter] = useGetWithFiltersMutation();
     const [putGeneral] = usePutGeneralMutation();
     const [pedidos, setPedidos] = useState<any[]>([]);
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState<any | null>(null);

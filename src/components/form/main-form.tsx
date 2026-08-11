@@ -18,7 +18,7 @@ import { CheckboxComponent as Checkbox } from "./checkbox";
 import { CheckboxGroupComponent as CheckboxGroup } from "./checkbox-group";
 
 import { CalendarComponent as Calendar } from "./calendar";
-import { DateRangeComponent as DateRange } from "./date-range";
+import { DateRangeComponent as DateRange } from "./date";
 
 import { Rating } from "./rating";
 
@@ -32,19 +32,22 @@ import { TagInputComponent as TagInput } from "./tag-input"
 import { useLoginUserMutation } from "@/hooks/reducers/auth";
 import { useAppDispatch } from "@/hooks/selector";
 import { openAlertReducer } from "@/hooks/reducers/drop-down";
-import { usePostGeneralMutation, usePostImgMutation, usePostMutation } from "@/hooks/reducers/api";
+import { usePostGeneralMutation, usePostImgMutation, usePutGeneralMutation } from "@/hooks/reducers/api";
+import { setLocalStorageItem } from "@/utils/functions/local-storage";
+import { cn } from "@/utils/functions/cn";
+import { usePostIntelisisMutation, usePutIntelisisMutation } from "@/hooks/reducers/api_int";
+import { RadioInputListComponent } from "./input-radio";
 
 export const MainForm = React.forwardRef(({
   message_button,
   dataForm,
+  flexDirection = "flex-col",
   actionType,
   aditionalData,
   showButton = true,
   action,
   valueAssign,
   onSuccess,
-  formName,
-  modelName,
   iconButton,
   table
 }: MainFormProps, ref: any) => {
@@ -116,26 +119,47 @@ export const MainForm = React.forwardRef(({
 
 
   const [postUserLogin] = useLoginUserMutation();
-  const [post] = usePostMutation();
   const [postGeneral] = usePostGeneralMutation();
+  const [portInt] = usePostIntelisisMutation();
+  const [putGeneral] = usePutGeneralMutation();
+  const [putInt] = usePutIntelisisMutation();
   const [postImg] = usePostImgMutation(); // Hook para subir imágenes
 
   async function getMutationFunction(actionType: string, data: FormData | any) {
-    const payload = formName ? data : { [modelName ?? actionType.toLowerCase()]: modelName ? data : [data] };
-
+    const { id, ...restData } = data;
     switch (actionType) {
       case "post-login":
-        return await postUserLogin(data).unwrap();
+        return await postUserLogin(data).unwrap().then(() => {
+          setLocalStorageItem("userCredentials", data)
+        });
       case "post-general":
         return await postGeneral({
           table: table,
           data: data,
           signal: new AbortController().signal,
         }).unwrap();
-      case "post":
-        return await post({
-          url: actionType,
-          data: payload,
+      case "post-intelisis":
+        return await portInt({
+          table: table,
+          data: data,
+          signal: new AbortController().signal,
+        }).unwrap();
+      case "put-general":
+        return await putGeneral({
+          table: table,
+          data: {
+            Data: restData,
+            Filtros: [{ Key: "id", Value: aditionalData.id, Operator: "=" }]
+          },
+          signal: new AbortController().signal,
+        }).unwrap();
+      case "put-intelisis":
+        return await putInt({
+          table: table,
+          data: {
+            Data: restData,
+            Filtros: [{ Key: "id", Value: aditionalData.id, Operator: "=" }]
+          },
           signal: new AbortController().signal,
         }).unwrap();
       default:
@@ -246,22 +270,14 @@ export const MainForm = React.forwardRef(({
             ? { ...dataWithoutFiles, ...aditionalData }
             : dataWithoutFiles;
 
-          const formatData = new FormData();
-          formName && formatData.append(formName, JSON.stringify(combinedData));
-
-          result = await getMutationFunction(actionType, formName && formatData ? formatData : combinedData);
+          result = await getMutationFunction(actionType, combinedData);
         }
       } else {
-        // Si no hay archivos, proceder con el flujo normal
-        const formatData = new FormData();
-
         combinedData = aditionalData
           ? { ...submitData, ...aditionalData }
           : submitData;
 
-        formName && formatData.append(formName, JSON.stringify(combinedData));
-
-        result = await getMutationFunction(actionType, formName && formatData ? formatData : combinedData);
+        result = await getMutationFunction(actionType, combinedData);
       }
 
       if (onSuccess) onSuccess(result, combinedData);
@@ -283,7 +299,6 @@ export const MainForm = React.forwardRef(({
           console.log('Error processing action:', error);
         }
       }
-      reset();
     } catch (error: any) {
       console.log("Error en el envío del formulario:", error)
       dispatch(openAlertReducer(error.data?.message ?
@@ -299,9 +314,10 @@ export const MainForm = React.forwardRef(({
           type: "error",
           icon: "archivo",
           duration: 4000
-        }))
+        }));
     } finally {
       setLoading(false);
+      reset();
     }
   }
 
@@ -323,37 +339,72 @@ export const MainForm = React.forwardRef(({
   return (
     <form
       ref={ref}
-      onSubmit={handleSubmit(onSubmit)} className="relative w-full space-y-2 my-2 m-auto">
-      {pages[page].map((field: any, key: any) => (
-        <SwitchTypeInputRender
-          key={key}
-          cuestion={field}
-          control={control}
-          register={register}
-          watch={watch}
-          clearErrors={clearErrors}
-          setError={setError}
-          errors={errors}
-          getValues={getValues}
-          setValue={setValue}
-        />
-      ))}
+      onSubmit={handleSubmit(onSubmit)}
+      method="post"
+      className={cn(
+        "relative flex w-full my-2 m-auto gap-2",
+        flexDirection,
+        // En row, necesitamos items-end para que el div del botón se alinee abajo
+        flexDirection === "flex-row" && "items-end"
+      )}
+    >
+      <div className="flex flex-col gap-4 w-full">
+        {pages[page].map((field: any, key: any) => (
+          <SwitchTypeInputRender
+            key={key}
+            cuestion={field}
+            control={control}
+            register={register}
+            watch={watch}
+            clearErrors={clearErrors}
+            setError={setError}
+            errors={errors}
+            getValues={getValues}
+            setValue={setValue}
+          />
+        ))}
+      </div>
 
-      {showButton && (<div className="flex justify-between mt-4">
-        {page > 0 && (
-          <Button color="indigo" type="button" label="Anterior" onClick={() => handlePageChange(page - 1)} />
-        )}
-        {page < pages.length - 1 ? (
-          <Button color="indigo" aling="ml-auto" type="button" label="Siguiente" onClick={() => handlePageChange(page + 1)} />
-        ) : (
-          <button
-            className="float-right ml-auto cursor-pointer flex gap-2 items-center rounded-md bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
-            type="submit"
-            slot="end"
-            disabled={loading}
-          >{iconButton ? iconButton : <CircleCheckBig className="size-4" />}{loading ? "Loading..." : message_button}</button>
-        )}
-      </div>)}
+      {showButton && (
+        <div
+          className={cn(
+            "flex gap-2",
+            flexDirection === "flex-row"
+              // row: columna de botones pegada al borde inferior derecho, sin crecer
+              ? "flex-col justify-end items-end shrink-0 self-end"
+              // col: fila con prev/next separados
+              : "flex-row justify-between w-full"
+          )}
+        >
+          {page > 0 && (
+            <Button
+              color="success"
+              type="button"
+              size="small"
+              label="Anterior"
+              onClick={() => handlePageChange(page - 1)}
+            />
+          )}
+          {page < pages.length - 1 ? (
+            <Button
+              color="success"
+              size="small"
+              type="button"
+              label="Siguiente"
+              onClick={() => handlePageChange(page + 1)}
+            />
+          ) : (
+            <Button
+              color="success"
+              type="submit"
+              disabled={loading}
+            >
+              {iconButton ? iconButton : <CircleCheckBig className="size-4" />}
+              {loading ? "Loading..." : message_button}
+            </Button>
+          )}
+        </div>
+      )}
     </form>
   );
 });
@@ -393,6 +444,8 @@ export function SwitchTypeInputRender(props: any) {
       return <TagInput {...props} />;
     case "RATING":
       return <Rating {...props} />;
+    case "RADIO":
+      return <RadioInputListComponent {...props} />;
     case "Flex":
       return <FlexComponent {...props} elements={props.cuestion.elements} />;
     case "H1":

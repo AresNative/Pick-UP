@@ -21,7 +21,7 @@ import {
 
 import {
     useGetWithFiltersMutation,
-    usePostMutation,
+    usePostGeneralMutation,
     usePutGeneralMutation
 } from "@/hooks/reducers/api";
 
@@ -50,7 +50,6 @@ interface UserInfo {
     email?: string;
     correo?: string;
     Nombre?: string;
-    Apellidos?: string;
     [key: string]: any;
 }
 
@@ -133,7 +132,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
     const { items = [] } = cart || {};
 
     // API Mutations
-    const [PostData] = usePostMutation();
+    const [PostData] = usePostGeneralMutation();
     const [GetData] = useGetWithFiltersMutation();
     const [PutData] = usePutGeneralMutation();
     const [PostInt] = usePostIntelisisMutation();
@@ -200,8 +199,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
 
             // Guardar datos esenciales del usuario
             setLocalStorageItem("user-data", {
-                Nombre: userData.nombre || userData.Nombre || null,
-                APELLIDOS: userData.aPELLIDOS || userData.APELLIDOS || null,
+                Nombre: userData.Nombre || null,
                 correo: userData.correo,
                 telefono: userData.telefono,
             });
@@ -217,7 +215,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             }
 
             const existingUser = await safeCall(() => GetData({
-                url: "usuarios",
+                table: "usuarios",
                 filtros: {
                     Filtros: [{ Key: "email", Value: userData.correo }],
                     Order: [{ Key: "id", Direction: "Desc" }]
@@ -231,7 +229,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                 const userId = getLocalStorageItem("user-id");
                 if (userId) {
                     await safeCall(() => PutData({
-                        url: "usuarios",
+                        table: "usuarios",
                         data: {
                             Data: {
                                 email: userData.correo
@@ -672,7 +670,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
 
         // Buscar cliente por email
         const clientResponse = await safeCall(() => GetData({
-            url: "clientes",
+            table: "clientes",
             filtros: {
                 Filtros: [{ Key: "email", Value: user.correo }],
                 Order: [{ Key: "id", Direction: "Desc" }]
@@ -689,9 +687,9 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
 
             // Crear nuevo cliente con hora local
             const createResponse = await safeCall(() => PostData({
-                url: "clientes",
+                table: "clientes",
                 data: {
-                    nombre: `${user.Nombre || user.nombre} ${user.Apellidos || ""}`.trim(),
+                    nombre: `${user.Nombre || user.nombre} `.trim(),
                     telefono: user.telefono,
                     email: user.correo,
                     fecha_registro: getLocalISOString(), // ← CORREGIDO
@@ -721,7 +719,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
                 const searchResponse = await safeCall(() => GetData({
-                    url: "clientes",
+                    table: "clientes",
                     filtros: {
                         Filtros: [
                             { Key: "email", Value: user.correo },
@@ -738,7 +736,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                     clientId = newClients[0].id;
                 } else {
                     const finalSearch = await safeCall(() => GetData({
-                        url: "clientes",
+                        table: "clientes",
                         filtros: {
                             Filtros: [{ Key: "telefono", Value: user.telefono }],
                             Order: [{ Key: "id", Direction: "Desc" }]
@@ -794,7 +792,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         const isoLocal = new Date(fechaObjeto - fechaObjeto.getTimezoneOffset() * 60000).toISOString().slice(0, -1);
         // Crear lista de pickup con hora local
         const listaResponse = await safeCall(() => PostData({
-            url: "listas",
+            table: "listas",
             data: {
                 id_cliente: clientId,
                 usuario_id: userId,

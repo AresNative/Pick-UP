@@ -19,6 +19,7 @@ export type FieldType =
   | "LINK"
   | "RATING"
   | "TAG_INPUT"
+  | "RADIO"
   | "H1";
 
 export interface SelectOption {
@@ -43,15 +44,18 @@ export interface Field {
   maxLength?: number; // For TEXT_AREA and INPUT
   minLength?: number; // For TEXT_AREA and INPUT
   valueDefined?: any;
+  saveData?: boolean; // For SEARCH: acumula selecciones como tags en vez de sobreescribir el valor
   horas?: boolean; // For DATE_RANGE
   href?: string;
   icon?: React.ReactNode;
+  radioGroupName?: string;
 }
 
 export interface MainFormProps {
   message_button: React.ReactNode | string;
   actionType: string;
   dataForm: Field[];
+  flexDirection?: string;
   aditionalData?: any;
   valueAssign?: any;
   formName?: string;
@@ -144,7 +148,7 @@ export interface SearchableSelectProps {
   clearErrors: (name: string) => void;
   register: (
     name: string,
-    options: Record<string, unknown>
+    options: Record<string, unknown>,
   ) => Record<string, unknown>;
   errors: Record<string, { message?: string } | undefined>;
 }

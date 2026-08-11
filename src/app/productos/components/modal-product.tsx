@@ -27,7 +27,7 @@ import { IconLiz } from "./ionc-liz";
 import { useEffect, useMemo, useState } from "react";
 import { useGetWithFiltersGeneralInIntelisisMutation } from "@/hooks/reducers/api_int";
 import ProductPreviewModal from "./modal-recomendado";
-import { useGetWithFiltersGeneralMutation } from "@/hooks/reducers/api";
+import { useGetWithFiltersMutation } from "@/hooks/reducers/api";
 import { EnvConfig } from "@/utils/constants/env.config";
 import { formatValue } from "@/utils/constants/format-values";
 
@@ -71,7 +71,7 @@ const ModalProd: React.FC<ProductModalProps> = ({
     });
 
     const [getWithFilter] = useGetWithFiltersGeneralInIntelisisMutation();
-    const [getWithFilterImg] = useGetWithFiltersGeneralMutation();
+    const [getWithFilterImg] = useGetWithFiltersMutation();
 
     const isLowStock = unidadSeleccionada.cantidad > 0 && unidadSeleccionada.cantidad <= 10;
     const isOutOfStock = unidadSeleccionada.cantidad <= 0;

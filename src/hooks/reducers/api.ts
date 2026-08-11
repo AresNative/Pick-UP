@@ -2,6 +2,7 @@ import { EnvConfig } from "@/utils/constants/env.config";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getLocalStorageItem } from "@/utils/functions/local-storage";
 
+const USER_DATA_KEY = "userData";
 const { api: apiUrl } = EnvConfig();
 /* 
 @  endpoints:
@@ -24,7 +25,7 @@ const { api: apiUrl } = EnvConfig();
 
 Ejemplo de uso en un componente:
 
-import { useGetQuery, usePostMutation } from "@/hooks/reducers/api";
+import { useGetQuery, usePostMutation } from "@/hooks/api/api";
 const { data, isLoading:loading, error, refetch } = useGetQuery({ url: 'tu-endpoint', signal: new AbortController().signal });
 const [postData, { data: postResponse, error: postError, isLoading: isPosting }] = usePostMutation();
 postData({ url: 'tu-endpoint', data: { key: 'value' }, signal: new AbortController().signal });
@@ -38,40 +39,17 @@ export const api = createApi({
   refetchOnMountOrArgChange: true, // Mejor control de refetch
   baseQuery: fetchBaseQuery({
     baseUrl: apiUrl,
-    prepareHeaders: async (headers, {}) => {
-      const token = getLocalStorageItem("token"); // <- usa cookie
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
+    prepareHeaders: async (headers) => {
+      headers.set("Content-Type", "application/json");
+
+       const token = getLocalStorageItem("token"); // <- usa cookie
+       if (token) {
+         headers.set("Authorization", `Bearer ${token}`);
+       }
+       return headers;
     },
   }),
   endpoints: (builder) => ({
-    get: builder.query({
-      query: ({ url, signal }) => ({
-        url: `${url}/consultar`,
-        method: "GET",
-        signal,
-      }),
-      transformErrorResponse: (response: any) => ({
-        status: response.status,
-        message: response.data?.message || "Error fetching data",
-      }),
-      extraOptions: { maxRetries: 2 },
-    }),
-    getGeneral: builder.query({
-      query: ({ param, signal }) => ({
-        url: `/consultar`,
-        method: "GET",
-        params: { param },
-        signal,
-      }),
-      transformErrorResponse: (response: any) => ({
-        status: response.status,
-        message: response.data?.message || "Error fetching data",
-      }),
-      extraOptions: { maxRetries: 2 },
-    }),
     getPerIds: builder.query({
       query: ({ url, id, signal }) => ({
         url: `${url}/consultar/${id}`,
@@ -84,25 +62,10 @@ export const api = createApi({
       }),
       extraOptions: { maxRetries: 2 },
     }),
+
     getWithFilters: builder.mutation({
-      query: ({ url, page, pageSize, filtros, signal }) => ({
-        url: `/v1/consultar`,
-        method: "POST",
-        params: {
-          fromClause: url, // tabla a consultar
-        },
-        body: { ...filtros, page, pageSize },
-        signal,
-      }),
-      transformErrorResponse: (response: any) => ({
-        status: response.status,
-        message: response.data?.message || "Error fetching data",
-      }),
-      extraOptions: { maxRetries: 2 },
-    }),
-    getWithFiltersGeneral: builder.mutation({
       query: ({ table, tag, page, pageSize, filtros, signal }) => ({
-        url: `/v1/consultar`,
+        url: `v1/consultar`,
         method: "POST",
         params: {
           fromClause: table, // tabla a consultar
@@ -117,44 +80,12 @@ export const api = createApi({
       }),
       extraOptions: { maxRetries: 2 },
     }),
-    post: builder.mutation({
-      query: ({ url, data, signal }) => ({
-        url: `v1/register`,
-        method: "POST",
-        params: { table:url }, // tabla a consultar
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal,
-      }),
-      transformErrorResponse: (response: any) => ({
-        status: response.status,
-        message: response.data?.message || "Error fetching data",
-      }),
-      extraOptions: { maxRetries: 2 },
-    }),
+
     postGeneral: builder.mutation({
       query: ({ table, data, signal }) => ({
         url: `v1/register`,
         method: "POST",
         params: { table },
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal,
-      }),
-      transformErrorResponse: (response: any) => ({
-        status: response.status,
-        message: response.data?.message || "Error fetching data",
-      }),
-      extraOptions: { maxRetries: 2 },
-    }),
-    put: builder.mutation({
-      query: ({ url, id, data, signal }) => ({
-        url: `${url}/update/${id}`,
-        method: "PUT",
         body: JSON.stringify(data),
         headers: {
           "Content-Type": "application/json",
@@ -217,10 +148,10 @@ export const api = createApi({
     }),
     // Agregar este endpoint a tu api.ts
     deleteGeneral: builder.mutation({
-      query: ({ table, id, signal }) => ({
+      query: ({ table, column, id, signal }) => ({
         url: `v1/delete/${id}`,
         method: "DELETE",
-        params: { table },
+        params: { column, table },
         signal,
       }),
       transformErrorResponse: (response: any) => ({
@@ -242,6 +173,7 @@ export const api = createApi({
       }),
       extraOptions: { maxRetries: 2 },
     }),
+
     deleteArchivos: builder.mutation({
       query: ({ id, signal }) => ({
         url: `v1/recursos/archivos/delete/${id}`,
@@ -258,14 +190,9 @@ export const api = createApi({
 });
 
 export const {
-  useGetQuery,
-  useGetGeneralQuery,
   useGetPerIdsQuery,
   useGetWithFiltersMutation,
-  useGetWithFiltersGeneralMutation,
-  usePostMutation,
   usePostGeneralMutation,
-  usePutMutation,
   usePutGeneralMutation,
   usePostImgMutation,
   usePostArchviosMutation,

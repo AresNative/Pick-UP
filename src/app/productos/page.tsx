@@ -4,7 +4,7 @@ import Card from "./components/card";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGetWithFiltersGeneralInIntelisisMutation } from "@/hooks/reducers/api_int";
 import CategorySlider from "./components/categories";
-import PromoBanner from "./components/banner";
+/* import PromoBanner from "./components/banner"; */
 import Badge from "@/components/badge";
 import { formatValue } from "@/utils/constants/format-values";
 import { getLocalStorageItem, removeFromLocalStorage } from "@/utils/functions/local-storage";

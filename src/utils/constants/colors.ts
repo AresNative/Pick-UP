@@ -1,41 +1,41 @@
 export const colorClasses = {
   green: {
-    bg: "bg-green-50",
-    text: "text-green-600",
+    bg: "bg-green-50 dark:bg-green-900",
+    text: "text-green-600 dark:text-green-400",
     ring: "ring-green-500/10",
   },
   red: {
-    bg: "bg-red-50",
-    text: "text-red-600",
+    bg: "bg-red-50 dark:bg-red-900",
+    text: "text-red-600 dark:text-red-400",
     ring: "ring-red-500/10",
   },
   yellow: {
-    bg: "bg-yellow-50",
-    text: "text-yellow-600",
+    bg: "bg-yellow-50 dark:bg-yellow-900",
+    text: "text-yellow-600 dark:text-yellow-400",
     ring: "ring-yellow-500/10",
   },
   blue: {
-    bg: "bg-blue-50",
-    text: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-900",
+    text: "text-blue-600 dark:text-blue-400",
     ring: "ring-blue-500/10",
   },
   purple: {
-    bg: "bg-purple-50",
-    text: "text-purple-600",
+    bg: "bg-purple-50 dark:bg-purple-900",
+    text: "text-purple-600 dark:text-purple-400",
     ring: "ring-purple-500/10",
   },
   indigo: {
-    bg: "bg-indigo-50",
-    text: "text-indigo-600",
+    bg: "bg-indigo-50 dark:bg-indigo-900",
+    text: "text-indigo-600 dark:text-indigo-400",
     ring: "ring-indigo-500/10",
   },
   pink: {
-    bg: "bg-pink-50",
-    text: "text-pink-600",
+    bg: "bg-pink-50 dark:bg-pink-900",
+    text: "text-pink-600 dark:text-pink-400",
     ring: "ring-pink-500/10",
   },
   gray: {
-    bg: "bg-zinc-50",
+    bg: "bg-zinc-50 dark:bg-gray-700",
     text: "text-gray-600 dark:text-gray-100",
     ring: "ring-gray-500/10",
   },
@@ -52,40 +52,47 @@ export const colorClasses = {
 };
 export const buttonClasses = {
   success: {
-    bg: "bg-green-600",
-    hover: "hover:bg-green-100 hover:text-white",
+    bg: "bg-green-600 border border-green-600 rounded-md",
+    hover: "hover:bg-green-100 hover:text-green-800 hover:border-green-700",
     text: "text-green-50",
     ring: "ring-green-500/10",
   },
   error: {
-    bg: "bg-red-600",
-    hover: "hover:bg-red-100 hover:text-white",
+    bg: "bg-red-600 border border-red-600 rounded-md",
+    hover: "hover:bg-red-100 hover:text-red-800 hover:border-red-700",
     text: "text-red-50",
     ring: "ring-red-500/10",
   },
   warning: {
-    bg: "bg-yellow-600",
-    hover: "hover:bg-yellow-100 hover:text-white",
+    bg: "bg-yellow-600 border border-yellow-600 rounded-md",
+    hover: "hover:bg-yellow-100 hover:text-yellow-800 hover:border-yellow-700",
     text: "text-yellow-50",
     ring: "ring-yellow-500/10",
   },
   completed: {
-    bg: "bg-blue-600",
-    hover: "hover:bg-blue-100 hover:text-white",
+    bg: "bg-blue-600 border border-blue-600 rounded-md",
+    hover: "hover:bg-blue-100 hover:text-blue-800 hover:border-blue-700",
     text: "text-blue-50",
     ring: "ring-blue-500/10",
   },
   info: {
-    bg: "bg-purple-600",
-    hover: "hover:bg-purple-100 hover:text-white ",
+    bg: "bg-purple-600 border border-purple-600 rounded-md",
+    hover: "hover:bg-purple-100 hover:text-purple-800 hover:border-purple-700",
     text: "text-purple-50",
     ring: "ring-purple-500/10",
   },
   indigo: {
-    bg: "bg-indigo-600",
-    hover: "hover:bg-indigo-100 hover:text-indigo-800",
+    bg: "bg-indigo-600 border border-indigo-600 rounded-md",
+    hover: "hover:bg-indigo-100 hover:text-indigo-800 hover:border-indigo-700",
     text: "text-indigo-50",
     ring: "ring-indigo-500/10",
+  },
+  second: {
+    bg: "bg-gray-200 dark:bg-gray-700 dark:text-white border border-gray-200 dark:border-gray-700 rounded-md",
+    hover:
+      "hover:bg-gray-100 hover:dark:bg-gray-700 hover:text-gray-300 hover:border-gray-300 hover:dark:border-gray-600",
+    text: "text-gray-600",
+    ring: "ring-gray-500/10",
   },
 };
 export const alertClasses = {
@@ -124,6 +131,12 @@ export const alertClasses = {
     hover: "hover:bg-indigo-500 hover:text-indigo-800",
     text: "text-indigo-600",
     ring: "ring-indigo-500/10",
+  },
+  second: {
+    bg: "bg-gray-50",
+    hover: "hover:bg-gray-200 hover:text-gray-800",
+    text: "text-gray-600",
+    ring: "ring-gray-500/10",
   },
 }; // Añadido para evitar modificaciones si usas TypeScript
 
