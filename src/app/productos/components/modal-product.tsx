@@ -311,6 +311,7 @@ const ModalProd: React.FC<ProductModalProps> = ({
                         slot="start"
                         color={"light"}
                         onClick={onDismiss}
+                        className="flex h-full items-center gap-2 left-0 p-2 cursor-pointer absolute "
                     >
                         <IonIcon icon={close} />
                     </IonButton>
@@ -462,13 +463,12 @@ const ModalProd: React.FC<ProductModalProps> = ({
                 <IonToolbar>
                     <div className="flex items-center justify-between px-4 pt-2 pb-10 md:pb-16">
                         <div className="flex flex-col">
-                            <strong className="text-gray-500">
-                                {unidades.length > 1 && (
-                                    <span>
-                                        Unidad: {unidadSeleccionada.unidad}
-                                    </span>
-                                )}
-                            </strong>
+                            <span className="text-gray-500">
+                                <strong>
+                                    Unidad: {" "}
+                                </strong>
+                                {unidadSeleccionada.unidad}
+                            </span>
                         </div>
                         <AddToCartButton
                             id={productoActualizado.id}
