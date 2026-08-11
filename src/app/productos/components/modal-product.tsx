@@ -30,6 +30,8 @@ import ProductPreviewModal from "./modal-recomendado";
 import { useGetWithFiltersMutation } from "@/hooks/reducers/api";
 import { EnvConfig } from "@/utils/constants/env.config";
 import { formatValue } from "@/utils/constants/format-values";
+import { BentoGrid, BentoItem } from "@/components/bento-grid";
+import Card from "./card";
 
 const { hubs: apiUrl } = EnvConfig();
 
@@ -437,36 +439,21 @@ const ModalProd: React.FC<ProductModalProps> = ({
 
                     {/* Sección de Productos Recomendados */}
                     {recomendados.length > 0 && (
-                        <div className="bg-white rounded-lg p-4 border border-gray-200">
-                            <IonText>
-                                <h2 className="text-lg font-semibold mb-4">Productos Recomendados</h2>
-                            </IonText>
+                        <>
+                            <h2 className="text-lg font-semibold mb-4">Productos Recomendados</h2>
 
-                            <IonGrid className="p-0">
-                                <IonRow>
-                                    {recomendados.map((recommended:any) => (
-                                        <IonCol size="6" key={recommended.id}>
-                                            <div
-                                                className="bg-gray-50 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-100 transition-colors"
-                                                onClick={() => setrecomendadosselect(recommended)}
-                                            >
-                                                <img
-                                                    src="/logo.jpg"
-                                                    alt={recommended.nombre}
-                                                    className="w-16 h-16 object-cover mx-auto mb-2 rounded"
-                                                />
-                                                <IonText>
-                                                    <p className="text-xs font-medium mb-1 line-clamp-2">{recommended.nombre}</p>
-                                                </IonText>
-                                                <span className="text-sm font-bold text-purple-800">
-                                                    {formatValue(recommended.precio, "currency")}
-                                                </span>
-                                            </div>
-                                        </IonCol>
+                            <BentoGrid cols={2}>
+                                    {recomendados.map((recommended:any, index:number) => (
+                                        <BentoItem className="border-0 p-0 h-full">
+                                            <Card
+                                                key={index}
+                                                producto={recommended}
+
+                                            />
+                                        </BentoItem>
                                     ))}
-                                </IonRow>
-                            </IonGrid>
-                        </div>
+                            </BentoGrid>
+                        </>
                     )}
                 </article>
             </IonContent>
@@ -475,12 +462,13 @@ const ModalProd: React.FC<ProductModalProps> = ({
                 <IonToolbar>
                     <div className="flex items-center justify-between px-4 pt-2 pb-10 md:pb-16">
                         <div className="flex flex-col">
-                            <strong className="text-gray-500">Agregar a carrito</strong>
-                            {unidades.length > 1 && (
-                                <span className="text-xs text-gray-400">
-                                    Unidad: {unidadSeleccionada.unidad}
-                                </span>
-                            )}
+                            <strong className="text-gray-500">
+                                {unidades.length > 1 && (
+                                    <span>
+                                        Unidad: {unidadSeleccionada.unidad}
+                                    </span>
+                                )}
+                            </strong>
                         </div>
                         <AddToCartButton
                             id={productoActualizado.id}
