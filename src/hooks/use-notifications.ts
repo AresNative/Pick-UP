@@ -1,29 +1,22 @@
 // src/hooks/use-notifications.ts
 import { useEffect } from "react";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import { isPlatform } from "@ionic/react";
 import { EnvConfig } from "@/utils/constants/env.config";
 import { getLocalStorageItem } from "@/utils/functions/local-storage";
 
 const { apiMongoDb } = EnvConfig();
 
-/**
- * Envía el token FCM del dispositivo al backend (api-mongodb) para que
- * quede registrado y se puedan dirigir notificaciones push a este usuario.
- * Ver POST /api/push-tokens en api-mongodb.
- */
+// ── Registro del token en el backend ──
 async function registerTokenOnBackend(token: string) {
   if (!apiMongoDb) {
-    console.warn(
-      "VITE_MONGO_API_URL no está configurado; no se pudo registrar el token FCM.",
-    );
+    console.warn("VITE_MONGO_API_URL no configurado; no se registró el token.");
     return;
   }
-
   try {
     const userId = getLocalStorageItem("user-id");
-
-    await fetch(`${apiMongoDb}/api/push-tokens`, {
+    await fetch(`${apiMongoDb}/push-tokens`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,73 +30,112 @@ async function registerTokenOnBackend(token: string) {
       }),
     });
   } catch (error) {
-    console.error("Error al registrar el token FCM en el backend:", error);
+    console.error("Error al registrar el token FCM:", error);
   }
 }
 
+// ── Mostrar notificación local ──
+async function showLocalNotification(
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+) {
+  try {
+    // Crea el canal si no existe (solo Android)
+    if (isPlatform("android")) {
+      await LocalNotifications.createChannel({
+        id: "default",
+        name: "Canal por defecto",
+        description: "Notificaciones de la aplicación",
+        importance: 4, // alta
+        sound: "default",
+        vibration: true,
+      });
+    }
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: Date.now(),
+          title,
+          body,
+          extra: data,
+          sound: "default",
+          channelId: "default",
+        },
+      ],
+    });
+  } catch (error) {
+    console.error("Error al mostrar notificación local:", error);
+  }
+}
+
+// ── Hook principal ──
 export const usePushNotifications = () => {
   useEffect(() => {
-    if (!isPlatform("android")) return;
+    if (!isPlatform("android") && !isPlatform("ios")) return;
 
-    const initializeNotifications = async () => {
+    const initialize = async () => {
+      // 1. Solicitar permiso
+      const permission = await FirebaseMessaging.requestPermissions();
+      if (permission.receive !== "granted") {
+        console.warn("Permiso de notificaciones denegado");
+        return;
+      }
+      console.log("Permiso concedido");
+
+      // 2. Obtener token
       try {
-        // 1. SOLICITAR PERMISO: El usuario debe aceptar recibir notificaciones.
-        const permission = await FirebaseMessaging.requestPermissions();
-
-        if (permission.receive === "granted") {
-          console.log("Permiso de notificaciones concedido");
-
-          // 2. REGISTRAR Y OBTENER TOKEN: Este token identifica de forma única el dispositivo.
-          const { token } = await FirebaseMessaging.getToken();
-          console.log("Token FCM:", token);
-
-          // 3. Enviar el token al backend para poder notificar a este dispositivo.
-          if (token) await registerTokenOnBackend(token);
-        } else {
-          console.warn("Permiso de notificaciones denegado");
-        }
+        const { token } = await FirebaseMessaging.getToken();
+        console.log("Token FCM:", token);
+        if (token) await registerTokenOnBackend(token);
       } catch (error) {
-        console.error("Error al obtener el token FCM:", error);
+        console.error("Error al obtener token:", error);
       }
     };
 
-    initializeNotifications();
+    initialize();
 
-    // 4. ESCUCHAR NOTIFICACIONES EN PRIMER PLANO: Se ejecuta cuando la app está abierta.
-    const onMessageListener = FirebaseMessaging.addListener(
+    // 3. Escuchar notificaciones en primer plano
+    const onMessage = FirebaseMessaging.addListener(
       "notificationReceived",
-      (payload) => {
+      async (payload: any) => {
         console.log("Notificación en primer plano:", payload);
+        const title = payload.notification?.title || "Nueva notificación";
+        const body = payload.notification?.body || "";
+        const data = payload.data as Record<string, string> | undefined;
+        await showLocalNotification(title, body, data);
       },
     );
 
-    // 5. ESCUCHAR CUANDO EL USUARIO TOCA LA NOTIFICACIÓN: Permite navegar a una pantalla específica.
-    const onNotificationActionListener = FirebaseMessaging.addListener(
+    // 4. Escuchar apertura desde notificación
+    const onAction = FirebaseMessaging.addListener(
       "notificationActionPerformed",
       (event) => {
-        console.log("Usuario abrió desde la notificación:", event);
+        console.log("Abierto desde notificación:", event);
         const data = event.notification?.data as
           | Record<string, string>
           | undefined;
-        const targetUrl = data?.url;
-        if (targetUrl) {
-          window.location.href = targetUrl;
+        const url = data?.url;
+        if (url) {
+          window.location.href = url;
         }
       },
     );
 
-    // 6. Si el token se renueva (reinstalación, restauración, etc.), re-registrarlo.
-    const onTokenRefreshListener = FirebaseMessaging.addListener(
+    // 5. Escuchar renovación de token
+    const onTokenRefresh = FirebaseMessaging.addListener(
       "tokenReceived",
       (event) => {
         if (event.token) registerTokenOnBackend(event.token);
       },
     );
 
+    // Limpieza
     return () => {
-      onMessageListener.then((sub) => sub.remove());
-      onNotificationActionListener.then((sub) => sub.remove());
-      onTokenRefreshListener.then((sub) => sub.remove());
+      onMessage.then((sub) => sub.remove());
+      onAction.then((sub) => sub.remove());
+      onTokenRefresh.then((sub) => sub.remove());
     };
   }, []);
 };

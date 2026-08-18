@@ -39,19 +39,22 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
 
-    // Firebase BOM y dependencias
+    // 🔥 Firebase (BOM + mensajería)
     implementation platform('com.google.firebase:firebase-bom:34.17.0')
     implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-messaging'   // <--- AGREGAR ESTA LÍNEA
+    implementation 'com.google.firebase:firebase-messaging'   // <--- OBLIGATORIO
 }
 
 apply from: 'capacitor.build.gradle'
 
+// ✅ Aplica el plugin de Google Services SOLO si existe google-services.json
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {
         apply plugin: 'com.google.gms.google-services'
+    } else {
+        logger.warn("google-services.json not found. Push notifications will NOT work.")
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.warn("google-services.json not found. Push notifications will NOT work.")
 }
