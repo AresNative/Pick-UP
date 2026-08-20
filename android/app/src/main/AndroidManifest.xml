@@ -12,12 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- 🔥 Configuración del canal de notificaciones por defecto (para FCM) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="default" />
 
-        <!-- 📨 Servicio de Firebase Messaging (necesario para recibir notificaciones) -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false">
@@ -26,7 +24,6 @@
             </intent-filter>
         </service>
 
-        <!-- 🏠 Actividad principal -->
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
@@ -40,7 +37,6 @@
             </intent-filter>
         </activity>
 
-        <!-- 📁 FileProvider (necesario para compartir archivos, usado por Capacitor) -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

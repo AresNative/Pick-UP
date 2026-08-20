@@ -1,4 +1,4 @@
-/* // public/firebase-messaging-sw.js
+// public/firebase-messaging-sw.js
 //
 // Debe vivir en la RAÍZ del sitio (public/firebase-messaging-sw.js) para
 // poder registrarse con scope "/". Los Service Workers no pueden leer
@@ -55,4 +55,4 @@ self.addEventListener("notificationclick", (event) => {
         if (clients.openWindow) return clients.openWindow(url);
       }),
   );
-}); */
+});
