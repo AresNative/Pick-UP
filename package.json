@@ -1,7 +1,7 @@
 {
   "name": "Pick-Up",
   "private": true,
-  "version": "1.0.14",
+  "version": "1.0.15",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -31,7 +31,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "driver.js": "^1.3.6",
-    "firebase": "^12.12.1",
+    "firebase": "^12.18.0",
     "framer-motion": "^12.6.2",
     "ionicons": "^7.4.0",
     "jspdf": "^3.0.1",

@@ -6,6 +6,7 @@ type EnvConfigType = {
   mode: string;
   itemsPerPage: number;
   apiMongoDb: any;
+  firebaseVapidKey:any;
 };
 
 export const EnvConfig = (): EnvConfigType => {
@@ -27,7 +28,7 @@ export const EnvConfig = (): EnvConfigType => {
 
   const itemsPerPage = parseInt(import.meta.env.VITE_ITEMS_PER_PAGE || "10", 10); // Fallback a 10 si no está definido
   const apiMongoDb = import.meta.env.VITE_MONGO_API_URL;
-
+  const firebaseVapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
   return {
     api,
     api_int,
@@ -35,5 +36,6 @@ export const EnvConfig = (): EnvConfigType => {
     mode,
     itemsPerPage,
     apiMongoDb,
+    firebaseVapidKey,
   };
 };
