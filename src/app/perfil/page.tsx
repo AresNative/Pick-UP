@@ -74,7 +74,6 @@ interface ResumenData {
 
 const PerfilPage: React.FC<PageProps> = ({ onScroll }: PageProps) => {
     const [getDataUserPerfil] = useGetWithFiltersMutation();
-    const [putDataUserPerfil] = usePutGeneralMutation();
     const [logoutUser] = useLogoutUserMutation();
 
     const [dataUser, setDataUser] = useState<UserData>({});

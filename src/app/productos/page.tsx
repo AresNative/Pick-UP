@@ -16,6 +16,7 @@ import { clearAll } from "@/hooks/slices/app";
 import { clearCart } from "@/hooks/slices/cart";
 import { useHistory } from "react-router";
 import { CategoryRow } from "./components/categories-section";
+import { Loader2, AlertCircle, SearchX, Frown } from "lucide-react"; // ✨ nuevos íconos
 
 // Tipo para la respuesta de la API
 interface ApiResponse {
@@ -59,30 +60,30 @@ const mapApiItemToProducto = (item: any): Producto => ({
 });
 
 const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
-    const dispatch = useAppDispatch()
-    const history = useHistory()
+    const dispatch = useAppDispatch();
+    const history = useHistory();
     const cat = useAppSelector((state: RootState) => state.filterData);
     const categoriaFiltro = cat?.key?.value || '';
-    const sucursal = getLocalStorageItem("sucursal") ?? useAppSelector((state: any) => state.app.sucursal)
+    const sucursal = getLocalStorageItem("sucursal") ?? useAppSelector((state: any) => state.app.sucursal);
 
     // Estado local sincronizado con Redux
     const [selectedBranch, setSelectedBranch] = useState<(typeof Sucursales)[0] | null>(
         () => Sucursales.find(b => b.id === sucursal?.id) || null
-    )
+    );
     const [getData] = useGetWithFiltersGeneralInIntelisisMutation();
+
     // Cambiar sucursal
     const changeBranch = async () => {
-        await removeFromLocalStorage("sucursal") // Limpiar localStorage
-        dispatch(clearAll()) // Limpiar Redux
-        dispatch(clearCart()) // Limpiar Redux
-        history.push('/#sucursales') // Redirigir a selección
-    }
+        await removeFromLocalStorage("sucursal");
+        dispatch(clearAll());
+        dispatch(clearCart());
+        history.push('/#sucursales');
+    };
 
-    // Categorías visibles y su estado de paginación individual: cada
-    // categoría carga 5 artículos a la vez, con su propio scroll horizontal.
+    // Categorías visibles y su estado de paginación individual
     const [categorias, setCategorias] = useState<string[]>([]);
     const [categoriaData, setCategoriaData] = useState<Record<string, CategoryState>>({});
-    const [isLoadingCategorias, setIsLoadingCategorias] = useState(true);
+    const [isLoadingCategorias, setIsLoadingCategorias] = useState(true); // ← Único estado de carga global
 
     // Favoritos
     const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -108,8 +109,6 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
     }, [isFavoritesSection, getFavoriteProducts]);
 
     // Agrupamos los favoritos por categoría con la misma forma (CategoryState)
-    // que usamos para las categorías traídas del servidor, así ambas vistas
-    // se pueden renderizar con el mismo componente CategoryRow.
     const favoriteCategoryEntries = useMemo<[string, CategoryState][]>(() => {
         const groups = new Map<string, Producto[]>();
         favoriteItems.forEach((producto) => {
@@ -125,11 +124,12 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             ]);
     }, [favoriteItems]);
 
+    // ── Obtener lista de categorías (solo nombres) ──
     const fetchCategorias = useCallback(async () => {
         setIsLoadingCategorias(true);
         try {
             const result = await getData({
-                table: tablaProductos(), // o tablaOfertas()
+                table: tablaProductos(),
                 pageSize: 100000,
                 page: 1,
                 filtros: {
@@ -144,16 +144,18 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                     if (r.Grupo) nombres.add(r.Grupo);
                 });
                 setCategorias(Array.from(nombres).sort());
+            } else {
+                setCategorias([]);
             }
         } catch (error) {
             console.error("Error obteniendo categorías:", error);
             setCategorias([]);
         } finally {
-            setIsLoadingCategorias(false);
+            setIsLoadingCategorias(false); // ← Siempre se desactiva la carga
         }
     }, [getData]);
 
-    // ── Cargar una página (5 artículos) de UNA categoría específica ─────────
+    // ── Cargar una página (5 artículos) de UNA categoría específica ──
     const fetchCategoriaPage = useCallback(async (nombreCategoria: string, pagina: number) => {
         setCategoriaData(prev => ({
             ...prev,
@@ -190,10 +192,7 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                         }
                     ],
                     Order: [
-                        {
-                            Key: "Descripcion1",
-                            Direction: "ASC"
-                        }
+                        { Key: "Descripcion1", Direction: "ASC" }
                     ],
                 },
                 pageSize: PAGE_SIZE_POR_CATEGORIA,
@@ -231,24 +230,26 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             }));
         }
     }, [getData]);
-
-    // Al montar, o cuando cambia el filtro global de categoría (CategorySlider),
-    // recalculamos qué categorías mostrar. Si hay una categoría específica
-    // seleccionada, solo mostramos esa (una sola fila); si no, descubrimos
-    // todas las que tengan artículos disponibles.
+    const clearCategoryFilter = useCallback(() => {
+        history.push('/productos');
+        // También se podría usar window.location.reload() pero es menos suave.
+    }, [history]);
+    // ── Efecto principal: obtener categorías o usar filtro ──
     useEffect(() => {
-        if (isFavoritesSection) return;
+        if (isFavoritesSection) {
+            setIsLoadingCategorias(false);
+            return;
+        }
         setCategoriaData({});
         if (categoriaFiltro && categoriaFiltro !== 'TODO') {
             setCategorias([categoriaFiltro]);
-            setIsLoadingCategorias(false);
+            setIsLoadingCategorias(false); // No hay que cargar lista de categorías
         } else {
             fetchCategorias();
         }
     }, [categoriaFiltro, isFavoritesSection, fetchCategorias]);
 
-    // Carga la primera página (5 artículos) de cada categoría nueva que
-    // todavía no tenga datos cargados.
+    // ── Cargar primera página de cada categoría que aún no tenga datos ──
     useEffect(() => {
         if (isFavoritesSection) return;
         categorias.forEach((nombreCategoria) => {
@@ -258,6 +259,7 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         });
     }, [categorias, isFavoritesSection, categoriaData, fetchCategoriaPage]);
 
+    // ── Handlers y derivados ──
     const handleSectionChange = useCallback((section: string) => {
         setActiveSection(prev => (prev === section ? null : section));
     }, []);
@@ -276,8 +278,8 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
 
     const entriesAMostrar = isFavoritesSection ? favoriteCategoryEntries : categoriaEntries;
     const sinResultados = isFavoritesSection
-        ? favoriteItems.length === 0
-        : !isLoadingCategorias && entriesAMostrar.length === 0;
+        ? favoriteItems.length <= 0
+        : !isLoadingCategorias && entriesAMostrar.length <= 0;
 
     return (
         <IonContent
@@ -287,116 +289,178 @@ const Productos: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                 const isScrolled = e.detail.scrollTop > 20;
                 onScroll?.(isScrolled);
             }}
+            aria-live="polite"
+            aria-busy={isLoadingCategorias}
         >
-            <section className="px-4 py-4 max-w-6xl mx-auto md:mb-0 mb-16">
-                {/* <PromoBanner items={[
-                    {
-                        id: "1",
-                        backgroundColor: "bg-blue-600",
-                        content: {
-                            title: "Bienvenido a nuestra tienda",
-                            description: "Descubre nuestros productos exclusivos",
-                            position: "center",
-                            textColor: "text-white",
-                            buttonColor: "bg-white",
-                            buttonTextColor: "text-blue-600"
-                        }
-                    },
-                    {
-                        id: "2",
-                        gradient: "bg-gradient-to-r from-purple-500 to-pink-500",
-                        content: {
-                            title: "Nuevas Funcionalidades",
-                            subtitle: "Actualización de temporada",
-                            description: "Hemos añadido nuevas características para mejorar tu experiencia",
-                            position: "left",
-                            textColor: "text-white",
-                            buttonColor: "bg-yellow-400",
-                        }
-                    },
-                ]} autoPlay={true} interval={3000} showControls={true} showIndicators={true} /> */}
-                <CategorySlider />
+            <section className="px-4 py-4 mx-auto md:mb-0 mb-16">
+                <div className="flex flex-col md:flex-row md:gap-6">
+                    <CategorySlider />
 
-                <section className="sticky top-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 overflow-x-auto sm:overflow-visible scrollbar-hide z-50 bg-white/70 dark:bg-black/70 py-3 px-4 sm:py-2 sm:px-2 my-4 rounded-lg backdrop-blur-md border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-                        {[
-                            { key: null, label: "Productos", count: totalProductos },
-                            { key: 'Favoritos', label: "Favoritos", count: favoriteCount }
-                        ].map((section) => (
-                            <button
-                                key={section.key || 'ofertas'}
-                                onClick={() => handleSectionChange(section.key!)}
-                                className="flex items-center gap-2 h-10 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0"
-                            >
-                                <Badge
-                                    color={activeSection === section.key ? "purple" : "gray"}
-                                    text={`${section.label} ${section.count > 0 ? `(${formatValue(section.count, "number")})` : ''}`}
-                                />
-                            </button>
-                        ))}
-                        <IonButton
-                            fill="clear"
-                            routerLink="/ofertas"
-                            routerDirection="none"
-                            className="custom flex items-center gap-2 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0 flex items-center gap-2 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0"
-                        >
-                            <Badge color="gray" text="Solo ofertas" />
-                        </IonButton>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-4 flex-shrink-0 sm:ml-auto">
-                        {selectedBranch && (
-                            <>
-                                <div className="sm:flex items-center">
-                                    <span className="text-sm font-medium text-purple-800 dark:text-purple-300">
-                                        Almacén: <strong className="text-gray-700 dark:text-gray-300 ml-1">{selectedBranch.name}</strong>
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={changeBranch}
-                                    className="text-xs sm:text-sm text-purple-700 dark:text-purple-400 underline hover:text-purple-900 dark:hover:text-purple-300 transition-colors whitespace-nowrap"
+                    <div className="flex-1 min-w-0">
+                        {/* Sticky de filtros (sin cambios) */}
+                        <section className="sticky top-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 overflow-x-auto sm:overflow-visible scrollbar-hide z-50 bg-white/70 dark:bg-black/70 py-3 px-4 sm:py-2 sm:px-2 my-4 rounded-lg backdrop-blur-md border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+                                {[
+                                    { key: null, label: "Productos", count: totalProductos },
+                                    { key: 'Favoritos', label: "Favoritos", count: favoriteCount }
+                                ].map((section) => (
+                                    <button
+                                        key={section.key || 'ofertas'}
+                                        onClick={() => handleSectionChange(section.key!)}
+                                        className="flex items-center gap-2 h-10 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0"
+                                    >
+                                        <Badge
+                                            color={activeSection === section.key ? "purple" : "gray"}
+                                            text={`${section.label} ${section.count > 0 ? `(${formatValue(section.count, "number")})` : ''}`}
+                                        />
+                                    </button>
+                                ))}
+                                <IonButton
+                                    fill="clear"
+                                    routerLink="/ofertas"
+                                    routerDirection="none"
+                                    className="custom flex items-center gap-2 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0"
                                 >
-                                    Cambiar
-                                </button>
+                                    <Badge color="gray" text="Solo ofertas" />
+                                </IonButton>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-4 flex-shrink-0 sm:ml-auto">
+                                {selectedBranch && (
+                                    <>
+                                        <div className="sm:flex items-center">
+                                            <span className="text-sm font-medium text-purple-800 dark:text-purple-300">
+                                                Almacén: <strong className="text-gray-700 dark:text-gray-300 ml-1">{selectedBranch.name}</strong>
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={changeBranch}
+                                            className="text-xs sm:text-sm text-purple-700 dark:text-purple-400 underline hover:text-purple-900 dark:hover:text-purple-300 transition-colors whitespace-nowrap"
+                                        >
+                                            Cambiar
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* ✅ Spinner de carga inicial con Lucide */}
+                        {isLoadingCategorias && (
+                            <div
+                                className="flex flex-col items-center justify-center py-20"
+                                role="status"
+                                aria-label="Cargando categorías"
+                            >
+                                <Loader2 className="w-12 h-12 text-purple-600 animate-spin" />
+                                <p className="mt-4 text-gray-600 dark:text-gray-300">
+                                    Cargando categorías...
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Lista de productos (solo si no está cargando la lista de categorías) */}
+                        {!isLoadingCategorias && (
+                            <>
+                                {sinResultados ? (
+                                    // ── ✅ NUEVA SECCIÓN: Productos no encontrados ──
+                                    <div
+                                        className="flex flex-col items-center justify-center py-16 px-4 text-center"
+                                        role="status"
+                                        aria-live="polite"
+                                    >
+                                        {isFavoritesSection ? (
+                                            <>
+                                                <Frown className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
+                                                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                                                    No tienes favoritos guardados
+                                                </h3>
+                                                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm">
+                                                    Agrega productos a tu lista de favoritos para verlos aquí.
+                                                </p>
+                                                <button
+                                                    onClick={() => handleSectionChange(null as any)} // Vuelve a "Productos"
+                                                    className="mt-6 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                                                >
+                                                    Explorar productos
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <SearchX className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
+                                                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                                                    No encontramos productos
+                                                </h3>
+                                                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm">
+                                                    {categoriaFiltro && categoriaFiltro !== 'TODO'
+                                                        ? `No hay productos disponibles en la categoría "${categoriaFiltro}".`
+                                                        : 'No hay productos disponibles en este momento.'}
+                                                </p>
+                                                {categoriaFiltro && categoriaFiltro !== 'TODO' && (
+                                                    <button
+                                                        onClick={clearCategoryFilter}
+                                                        className="mt-6 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                                                    >
+                                                        Ver todas las categorías
+                                                    </button>
+                                                )}
+                                                {!categoriaFiltro && (
+                                                    <button
+                                                        onClick={() => window.location.reload()}
+                                                        className="mt-6 px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg transition-colors"
+                                                    >
+                                                        Recargar página
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // ── Lista normal de categorías con productos ──
+                                    <IonList className="bg-transparent" role="list">
+                                        {entriesAMostrar.map(([nombreCategoria, data]) => (
+                                            <CategoryRow
+                                                key={nombreCategoria}
+                                                title={nombreCategoria}
+                                                items={data.items}
+                                                hasMore={data.hasMore}
+                                                isLoading={data.isLoading}
+                                                onLoadMore={() => fetchCategoriaPage(nombreCategoria, data.page + 1)}
+                                                renderItem={(producto, index) => (
+                                                    <Card key={`${producto.id}-${index}`} producto={producto} />
+                                                )}
+                                                showSkeleton={data.isLoading && data.items.length === 0}
+                                            />
+                                        ))}
+                                    </IonList>
+                                )}
                             </>
                         )}
-                    </div>
-                </section>
 
-                <IonList className="bg-transparent">
-                    {entriesAMostrar.map(([nombreCategoria, data]) => (
-                        <CategoryRow
-                            key={nombreCategoria}
-                            title={nombreCategoria}
-                            items={data.items}
-                            hasMore={data.hasMore}
-                            isLoading={data.isLoading}
-                            onLoadMore={() => fetchCategoriaPage(nombreCategoria, data.page + 1)}
-                            renderItem={(producto, index) => (
-                                <Card
-                                    key={`${producto.id}-${index}`}
-                                    producto={producto}
-                                    
-                                />
-                            )}
-                        />
-                    ))}
-                </IonList>
-
-                {!isFavoritesSection && isLoadingCategorias && (
-                    <div className="text-center py-4">
-                        <p>Cargando productos…</p>
+                        {/* ✅ Estado de vacío con ícono */}
+                        {!isLoadingCategorias && sinResultados && (
+                            <div
+                                className="text-center py-8"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                {isFavoritesSection ? (
+                                    <>
+                                        <AlertCircle className="w-10 h-10 mx-auto text-gray-400" />
+                                        <p className="mt-2 text-gray-500">No tienes favoritos guardados</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <AlertCircle className="w-10 h-10 mx-auto text-gray-400" />
+                                        <p className="mt-2 text-gray-500">No se encontraron productos</p>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
-                )}
-
-                {sinResultados && (
-                    <div className="text-center py-8">
-                        <p>{isFavoritesSection ? "No tienes favoritos guardados" : "No se encontraron productos"}</p>
-                    </div>
-                )}
+                </div>
             </section>
         </IonContent>
     );
-}
+};
 
 export default Productos;

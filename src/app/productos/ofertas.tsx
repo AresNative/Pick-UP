@@ -4,14 +4,15 @@ import Card from "./components/card";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGetWithFiltersGeneralInIntelisisMutation } from "@/hooks/reducers/api_int";
 import CategorySlider from "./components/categories";
-import PromoBanner from "./components/banner";
 import Badge from "@/components/badge";
 import { formatValue } from "@/utils/constants/format-values";
 import { getLocalStorageItem } from "@/utils/functions/local-storage";
 import { Producto } from "@/utils/types/page";
-import { useAppSelector } from "@/hooks/selector";
+import { useAppSelector, useAppDispatch } from "@/hooks/selector";
 import { RootState } from "@/hooks/store";
 import { CategoryRow } from "./components/categories-section";
+import { useHistory } from "react-router";
+import { Loader2, SearchX, Frown } from "lucide-react";
 
 // Tipo para la respuesta de la API
 interface ApiResponse {
@@ -55,13 +56,14 @@ const mapApiItemToProducto = (item: any): Producto => ({
 });
 
 const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
+    const dispatch = useAppDispatch();
+    const history = useHistory();
     const cat = useAppSelector((state: RootState) => state.filterData);
     const categoriaFiltro = cat?.key?.value || '';
 
     const [getData] = useGetWithFiltersGeneralInIntelisisMutation();
 
-    // Categorías visibles y su estado de paginación individual: cada
-    // categoría carga 5 artículos a la vez, con su propio scroll horizontal.
+    // Categorías visibles y su estado de paginación individual
     const [categorias, setCategorias] = useState<string[]>([]);
     const [categoriaData, setCategoriaData] = useState<Record<string, CategoryState>>({});
     const [isLoadingCategorias, setIsLoadingCategorias] = useState(true);
@@ -89,9 +91,7 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         setFavoriteItems(getFavoriteProducts());
     }, [isFavoritesSection, getFavoriteProducts]);
 
-    // Agrupamos los favoritos por categoría con la misma forma (CategoryState)
-    // que usamos para las categorías traídas del servidor, así ambas vistas
-    // se pueden renderizar con el mismo componente CategoryRow.
+    // Agrupamos los favoritos por categoría
     const favoriteCategoryEntries = useMemo<[string, CategoryState][]>(() => {
         const groups = new Map<string, Producto[]>();
         favoriteItems.forEach((producto) => {
@@ -107,6 +107,7 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             ]);
     }, [favoriteItems]);
 
+    // ── Obtener lista de categorías (solo nombres) ──
     const fetchCategorias = useCallback(async () => {
         setIsLoadingCategorias(true);
         try {
@@ -126,6 +127,8 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                     if (r.Grupo) nombres.add(r.Grupo);
                 });
                 setCategorias(Array.from(nombres).sort());
+            } else {
+                setCategorias([]);
             }
         } catch (error) {
             console.error("Error obteniendo categorías:", error);
@@ -135,7 +138,7 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         }
     }, [getData]);
 
-    // ── Cargar una página (5 artículos) de UNA categoría específica ─────────
+    // ── Cargar una página (5 artículos) de UNA categoría específica ──
     const fetchCategoriaPage = useCallback(async (nombreCategoria: string, pagina: number) => {
         setCategoriaData(prev => ({
             ...prev,
@@ -205,12 +208,12 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         }
     }, [getData]);
 
-    // Al montar, o cuando cambia el filtro global de categoría (CategorySlider),
-    // recalculamos qué categorías mostrar. Si hay una categoría específica
-    // seleccionada, solo mostramos esa (una sola fila); si no, descubrimos
-    // todas las que tengan ofertas vigentes.
+    // ── Efecto principal: obtener categorías o usar filtro ──
     useEffect(() => {
-        if (isFavoritesSection) return;
+        if (isFavoritesSection) {
+            setIsLoadingCategorias(false);
+            return;
+        }
         setCategoriaData({});
         if (categoriaFiltro && categoriaFiltro !== 'TODO') {
             setCategorias([categoriaFiltro]);
@@ -220,8 +223,7 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         }
     }, [categoriaFiltro, isFavoritesSection, fetchCategorias]);
 
-    // Carga la primera página (5 artículos) de cada categoría nueva que
-    // todavía no tenga datos cargados.
+    // ── Cargar primera página de cada categoría que aún no tenga datos ──
     useEffect(() => {
         if (isFavoritesSection) return;
         categorias.forEach((nombreCategoria) => {
@@ -231,9 +233,15 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
         });
     }, [categorias, isFavoritesSection, categoriaData, fetchCategoriaPage]);
 
+    // ── Handlers ──
     const handleSectionChange = useCallback((section: string) => {
         setActiveSection(prev => (prev === section ? null : section));
     }, []);
+
+    // Limpiar filtro de categoría (redirige a /ofertas)
+    const clearCategoryFilter = useCallback(() => {
+        history.push('/ofertas');
+    }, [history]);
 
     const categoriaEntries = useMemo<[string, CategoryState][]>(() => (
         categorias.map((nombreCategoria) => [
@@ -260,94 +268,140 @@ const Ofertas: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                 const isScrolled = e.detail.scrollTop > 20;
                 onScroll?.(isScrolled);
             }}
+            aria-live="polite"
+            aria-busy={isLoadingCategorias}
         >
-            <section className="px-4 py-4 max-w-6xl mx-auto">
-                {/* <PromoBanner items={[
-                    {
-                        id: "1",
-                        backgroundColor: "bg-red-600",
-                        content: {
-                            title: "🔥 Ofertas Especiales",
-                            description: "Descuentos exclusivos por tiempo limitado",
-                            position: "center",
-                            textColor: "text-white",
-                            buttonColor: "bg-white",
-                            buttonTextColor: "text-red-600"
-                        }
-                    },
-                    {
-                        id: "2",
-                        gradient: "bg-gradient-to-r from-orange-500 to-red-500",
-                        content: {
-                            title: "🎯 Promociones Destacadas",
-                            description: "Aprovecha nuestras mejores ofertas de la temporada",
-                            position: "left",
-                            textColor: "text-white",
-                            buttonColor: "bg-yellow-400",
-                        }
-                    },
-                ]} autoPlay={true} interval={3000} showControls={true} showIndicators={true} /> */}
-                <CategorySlider />
+            <section className="px-4 py-4 mx-auto md:mb-0 mb-16">
+                <div className="flex flex-col md:flex-row md:gap-6">
+                    <CategorySlider />
 
-                <section className="sticky top-2 flex aling-center gap-2 overflow-x-auto scrollbar-hide z-50 bg-white/70 dark:bg-black/70 py-2 px-2 my-4 rounded-lg backdrop-blur-md border border-gray-200 dark:border-gray-700">
-                    {[
-                        { key: null, label: "Ofertas", count: totalOfertas },
-                        { key: 'Favoritos', label: "Favoritos", count: favoriteCount }
-                    ].map((section) => (
-                        <button
-                            key={section.key || 'ofertas'}
-                            onClick={() => handleSectionChange(section.key!)}
-                            className="flex items-center gap-2 h-10 cursor-pointer focus:outline-none"
-                        >
-                            <Badge
-                                color={activeSection === section.key ? "purple" : "gray"}
-                                text={`${section.label} ${section.count > 0 ? `(${formatValue(section.count, "number")})` : ''}`}
-                            />
-                        </button>
-                    ))}
-                    <IonButton
-                        fill="clear"
-                        expand="full"
-                        routerLink="/productos"
-                        routerDirection="none"
-                        className="custom flex items-center gap-2 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0">
-                        <Badge color="gray" text="Ver todos" />
-                    </IonButton>
-                </section>
+                    <div className="flex-1 min-w-0">
+                        {/* Sticky de filtros (igual que en Productos) */}
+                        <section className="sticky top-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 overflow-x-auto sm:overflow-visible scrollbar-hide z-50 bg-white/70 dark:bg-black/70 py-3 px-4 sm:py-2 sm:px-2 my-4 rounded-lg backdrop-blur-md border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+                                {[
+                                    { key: null, label: "Ofertas", count: totalOfertas },
+                                    { key: 'Favoritos', label: "Favoritos", count: favoriteCount }
+                                ].map((section) => (
+                                    <button
+                                        key={section.key || 'ofertas'}
+                                        onClick={() => handleSectionChange(section.key!)}
+                                        className="flex items-center gap-2 h-10 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0"
+                                    >
+                                        <Badge
+                                            color={activeSection === section.key ? "purple" : "gray"}
+                                            text={`${section.label} ${section.count > 0 ? `(${formatValue(section.count, "number")})` : ''}`}
+                                        />
+                                    </button>
+                                ))}
+                                <IonButton
+                                    fill="clear"
+                                    routerLink="/productos"
+                                    routerDirection="none"
+                                    className="custom flex items-center gap-2 cursor-pointer focus:outline-none transition-opacity hover:opacity-90 flex-shrink-0"
+                                >
+                                    <Badge color="gray" text="Ver todos" />
+                                </IonButton>
+                            </div>
+                            {/* (Opcional: aquí se podría mostrar la sucursal, pero en Ofertas no se usa) */}
+                        </section>
 
-                <IonList className="bg-transparent">
-                    {entriesAMostrar.map(([nombreCategoria, data]) => (
-                        <CategoryRow
-                            key={nombreCategoria}
-                            title={nombreCategoria}
-                            items={data.items}
-                            hasMore={data.hasMore}
-                            isLoading={data.isLoading}
-                            onLoadMore={() => fetchCategoriaPage(nombreCategoria, data.page + 1)}
-                            renderItem={(producto, index) => (
-                                <Card
-                                    key={`${producto.id}-${index}`}
-                                    producto={producto}
-                                />
-                            )}
-                        />
-                    ))}
-                </IonList>
+                        {/* Spinner de carga inicial */}
+                        {isLoadingCategorias && (
+                            <div
+                                className="flex flex-col items-center justify-center py-20"
+                                role="status"
+                                aria-label="Cargando ofertas"
+                            >
+                                <Loader2 className="w-12 h-12 text-purple-600 animate-spin" />
+                                <p className="mt-4 text-gray-600 dark:text-gray-300">
+                                    Cargando ofertas...
+                                </p>
+                            </div>
+                        )}
 
-                {!isFavoritesSection && isLoadingCategorias && (
-                    <div className="text-center py-4">
-                        <p>Cargando ofertas…</p>
+                        {/* Lista de productos o sección sin resultados */}
+                        {!isLoadingCategorias && (
+                            <>
+                                {sinResultados ? (
+                                    // ── Sección "Sin resultados" (mismo diseño que Productos) ──
+                                    <div
+                                        className="flex flex-col items-center justify-center py-16 px-4 text-center"
+                                        role="status"
+                                        aria-live="polite"
+                                    >
+                                        {isFavoritesSection ? (
+                                            <>
+                                                <Frown className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
+                                                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                                                    No tienes favoritos guardados
+                                                </h3>
+                                                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm">
+                                                    Agrega productos a tu lista de favoritos para verlos aquí.
+                                                </p>
+                                                <button
+                                                    onClick={() => handleSectionChange(null as any)}
+                                                    className="mt-6 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                                                >
+                                                    Explorar ofertas
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <SearchX className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
+                                                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                                                    No encontramos ofertas
+                                                </h3>
+                                                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm">
+                                                    {categoriaFiltro && categoriaFiltro !== 'TODO'
+                                                        ? `No hay ofertas disponibles en la categoría "${categoriaFiltro}".`
+                                                        : 'No hay ofertas disponibles en este momento.'}
+                                                </p>
+                                                {categoriaFiltro && categoriaFiltro !== 'TODO' && (
+                                                    <button
+                                                        onClick={clearCategoryFilter}
+                                                        className="mt-6 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                                                    >
+                                                        Ver todas las categorías
+                                                    </button>
+                                                )}
+                                                {!categoriaFiltro && (
+                                                    <button
+                                                        onClick={() => window.location.reload()}
+                                                        className="mt-6 px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg transition-colors"
+                                                    >
+                                                        Recargar página
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // ── Lista de categorías con productos ──
+                                    <IonList className="bg-transparent" role="list">
+                                        {entriesAMostrar.map(([nombreCategoria, data]) => (
+                                            <CategoryRow
+                                                key={nombreCategoria}
+                                                title={nombreCategoria}
+                                                items={data.items}
+                                                hasMore={data.hasMore}
+                                                isLoading={data.isLoading}
+                                                onLoadMore={() => fetchCategoriaPage(nombreCategoria, data.page + 1)}
+                                                renderItem={(producto, index) => (
+                                                    <Card key={`${producto.id}-${index}`} producto={producto} />
+                                                )}
+                                                showSkeleton={data.isLoading && data.items.length === 0}
+                                            />
+                                        ))}
+                                    </IonList>
+                                )}
+                            </>
+                        )}
                     </div>
-                )}
-
-                {sinResultados && (
-                    <div className="text-center py-8">
-                        <p>{isFavoritesSection ? "No tienes favoritos guardados" : "No se encontraron ofertas"}</p>
-                    </div>
-                )}
+                </div>
             </section>
         </IonContent>
     );
-}
+};
 
 export default Ofertas;

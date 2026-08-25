@@ -7,6 +7,7 @@ interface CategoryRowProps<T> {
     isLoading: boolean;
     onLoadMore: () => void;
     renderItem: (item: T, index: number) => ReactNode;
+    showSkeleton?: boolean;
 }
 
 /**
@@ -24,6 +25,7 @@ export function CategoryRow<T>({
     isLoading,
     onLoadMore,
     renderItem,
+    showSkeleton
 }: CategoryRowProps<T>) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,13 @@ export function CategoryRow<T>({
                 className="flex flex-nowrap gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory scroll-smooth w-full min-w-0"
                 style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}
             >
-                {items.map((item, index) => (
+                {showSkeleton ? (
+                    <div className="flex gap-4 overflow-x-auto py-2" role="list">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="w-40 h-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex-shrink-0" />
+                        ))}
+                    </div>
+                ) : items.map((item, index) => (
                     <div
                         key={index}
                         className="shrink-0 w-36 sm:w-44 md:w-48 snap-start"

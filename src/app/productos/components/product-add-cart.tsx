@@ -123,7 +123,7 @@ const AddToCartButton: React.FC<ButtonProps> = ({ id, cantidad, producto }) => {
                         onClick={handleAddToCart}
                         disabled={!canAddToCart}
                         className={cn(
-                            "p-2.5 min-w-10 gap-2 text-xs md:text-base flex items-center justify-between rounded-xl shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2",
+                            "p-2.5 min-w-10 gap-2 text-xs flex items-center justify-between rounded-xl shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2",
                             canAddToCart
                                 ? "bg-purple-600 hover:bg-purple-700 text-white"
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -157,7 +157,7 @@ const AddToCartButton: React.FC<ButtonProps> = ({ id, cantidad, producto }) => {
                             type={isKgUnit ? "number" : "text"}
                             value={displayQuantity}
                             onChange={handleQuantityChange}
-                            className="w-16 h-8 text-center text-sm font-medium bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-md"
+                            className="w-8 h-8 text-center text-sm font-medium bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-md"
                             min="0"
                             max={cantidad}
                             step={step}

@@ -137,38 +137,8 @@ const Card: React.FC<ProductCardProps> = ({ producto }) => {
                         </div>
                     )}
                 </div>
+                <li className="absolute flex justify-between w-11/12 right-2 top-2 gap-1 text-[12px]">
 
-                {/* ---- BOTÓN ADD TO CART ---- */}
-                <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3">
-                    <AddToCartButton
-                        id={producto.id}
-                        cantidad={formatearStock(producto.cantidad, producto.unidad, producto.factor)}
-                        producto={producto}
-                    />
-                </div>
-            </section>
-
-            <section className="p-4 min-h-24 bg-white">
-                <label className="font-semibold text-xs md:text-sm">{producto.nombre}</label>
-
-                <ul className="absolute w-[90%] mx-auto top-2 flex justify-between items-center">
-                    <li className="flex flex-col gap-1 text-[12px]">
-                        {discountPercentage > 0 && (
-                            <div className="w-full text-center border-2 bg-red-100 border-red-600 text-red-600  font-semibold px-2 py-1 rounded-md">
-                                -{discountPercentage}%
-                            </div>
-                        )}
-                        {isLowStock && (
-                            <div className="w-full text-center border-2 bg-yellow-100 border-yellow-600 text-yellow-600 font-semibold px-2 py-1 rounded-md">
-                                última(s) {producto.cantidad}
-                            </div>
-                        )}
-                        {isOutOfStock && (
-                            <div className="w-full text-center border-2 bg-gray-100 border-gray-600 text-gray-600  font-semibold px-2 py-1 rounded-md">
-                                agotado
-                            </div>
-                        )}
-                    </li>
                     <button
                         onClick={handleFavoriteToggle}
                         className="top-2 right-10 p-1.5 bg-white/80 rounded-full backdrop-blur-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -183,25 +153,52 @@ const Card: React.FC<ProductCardProps> = ({ producto }) => {
                             )}
                         />
                     </button>
-                </ul>
+                    <section className="flex flex-col">
+                        {discountPercentage > 0 && (
+                            <div className="w-full text-center border-2 bg-red-100 border-red-600 text-red-600  font-semibold px-2 py-1 rounded-md">
+                                -{discountPercentage}%
+                            </div>
+                        )}
+                        {isOutOfStock && (
+                            <div className="w-full text-center border-2 bg-gray-100 border-gray-600 text-gray-600  font-semibold px-2 py-1 rounded-md">
+                                agotado
+                            </div>
+                        )}
+                    </section>
+                </li>
+                {/* ---- BOTÓN ADD TO CART ---- */}
+                <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3">
+                    <AddToCartButton
+                        id={producto.id}
+                        cantidad={formatearStock(producto.cantidad, producto.unidad, producto.factor)}
+                        producto={producto}
+                    />
+                </div>
+            </section>
 
+            <section className="p-4 min-h-24 bg-white relative flex flex-col justify-between gap-2">
+                <label className="font-semibold text-xs md:text-sm">{producto.nombre}</label>
 
-                <p className="text-[10px] text-gray-500 flex items-center justify-between">{producto.unidad} | {producto.categoria}</p>
-                {/* <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <Barcode className="size-3 text-purple-800" />
-                    CB: {producto.codigo}
-                </p> */}
-                <p className="text-xs text-gray-500 flex items-center">
-                    <Hash className="size-3 text-purple-800" />
-                    STOK: {formatearStock(producto.cantidad, producto.unidad, producto.factor)}
-                </p>
-
-                {producto.unidad !== 'Pieza' && producto.unidad !== 'Kilogramo' && (
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                        <ReceiptText className="size-3 text-purple-800" />
-                        FACTOR: {producto.factor} (Piezas)
+                <label className="relative flex flex-col h-full">
+                    <p className="text-[10px] text-gray-500 flex items-center justify-between">{producto.unidad.toUpperCase()} | {producto.categoria}</p>
+                    <p className="text-xs text-gray-500 flex flex-col md:flex-row md:items-center gap-1">
+                        <span className="flex">
+                            Disponible:
+                        </span>
+                        {isLowStock ? (
+                            <span className="w-fit text-xs border-2 bg-yellow-100 border-yellow-600 text-yellow-600 font-semibold px-2 py-1 rounded-md">
+                                última(s) {formatValue(producto.cantidad, "number")}
+                            </span>
+                        ) : (formatearStock(producto.cantidad, producto.unidad, producto.factor))}
                     </p>
-                )}
+
+                    {producto.unidad !== 'Pieza' && producto.unidad !== 'Kilogramo' && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <ReceiptText className="size-3 text-purple-800" />
+                            FACTOR: {producto.factor} (Piezas)
+                        </p>
+                    )}
+                </label>
             </section>
 
             <footer className="mt-auto w-full bg-white border-t border-gray-100">
