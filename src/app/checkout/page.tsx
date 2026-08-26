@@ -42,6 +42,7 @@ import { clearCart } from "@/hooks/slices/cart";
 import { useHistory } from "react-router-dom";
 import { safeCall } from "@/hooks/use-debounce";
 import { sendOrderWhatsAppConfirmation } from "@/utils/functions/notify";
+import LottieAnimation from "@/components/lottie-animation";
 
 // --- INTERFACES ---
 interface UserInfo {
@@ -911,7 +912,17 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                             </p>
                         </div>
 
-                        {isProcessing && <p className="text-center mt-3">Procesando...</p>}
+                        {isProcessing && (
+                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                                <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-xs w-full">
+                                    <LottieAnimation src="/lottie/transportBlue.json" height={150} />
+                                    <p className="mt-4 text-lg font-semibold text-gray-700">
+                                        Procesando tu pedido...
+                                    </p>
+                                    <p className="text-sm text-gray-500">Por favor, espera un momento</p>
+                                </div>
+                            </div>
+                        )}
 
                         <IonButton
                             expand="block"
