@@ -1,11 +1,12 @@
 {
   "name": "Pick-Up",
   "private": true,
-  "version": "1.0.15",
+  "version": "1.0.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "ionic build --prod",
+    "build:android": "cross-env VITE_TARGET=capacitor ionic build --prod",
     "preview": "vite preview",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
