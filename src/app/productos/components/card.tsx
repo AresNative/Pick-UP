@@ -129,6 +129,7 @@ const Card: React.FC<ProductCardProps> = ({ producto }) => {
                         <img
                             src={image}
                             alt="Product Image"
+                            loading="lazy"
                             className="absolute inset-0 w-full h-full bg-white object-contain group-hover:scale-105 transition-transform duration-300"
                         />
                     ) : (

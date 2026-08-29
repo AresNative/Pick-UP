@@ -560,10 +560,9 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             Impuestos: totalProductTaxes,
             Retencion: 0,
         };
-
+        await safeCall(() => PostInt({ table: "Venta", data: saleData }), "Intelisis Venta");
         // Lanzamos las tres inserciones de encabezados en paralelo
         await Promise.all([
-            safeCall(() => PostInt({ table: "Venta", data: saleData }), "Intelisis Venta"),
             safeCall(() => PostInt({ table: "Mov", data: movData }), "Intelisis Mov"),
             safeCall(() => PostInt({ table: "Movimientos", data: movementsData }), "Intelisis Movimientos"),
         ]);
