@@ -1,22 +1,3 @@
-// src/utils/firebase/firebase-web.ts
-//
-// Contraparte "web" de @capacitor-firebase/messaging (que solo funciona en
-// Android/iOS nativos). Usa el SDK de Firebase para JS + un Service Worker
-// para poder recibir notificaciones aunque la pestaña esté cerrada.
-//
-// Requiere el paquete "firebase" (npm install firebase) y las siguientes
-// variables de entorno (agrégalas donde definas EnvConfig / tu .env):
-//   VITE_FIREBASE_API_KEY
-//   VITE_FIREBASE_AUTH_DOMAIN
-//   VITE_FIREBASE_PROJECT_ID
-//   VITE_FIREBASE_STORAGE_BUCKET
-//   VITE_FIREBASE_MESSAGING_SENDER_ID
-//   VITE_FIREBASE_APP_ID
-//   VITE_FIREBASE_VAPID_KEY   (Cloud Messaging > Web configuration > Web Push certificates)
-//
-// La config de Firebase Web NO es secreta (se puede ver en el bundle del
-// cliente igualmente), así que no hay problema en exponerla vía Vite.
-
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import {
   getMessaging,

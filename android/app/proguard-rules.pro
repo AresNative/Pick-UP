@@ -1,66 +1,43 @@
-# ============================
-# Capacitor core
-# ============================
--keep class com.getcapacitor.** { *; }
--keep class com.getcapacitor.plugin.** { *; }
--keepclassmembers class * extends com.getcapacitor.Plugin { *; }
--keepattributes *Annotation*
--keepattributes JavascriptInterface
+# ====================================
+# OPTIMIZACIONES EXTREMAS DE R8
+# ====================================
 
-# WebView JS bridge (Capacitor lo usa internamente para @JavascriptInterface)
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
+# Realiza 7 pasadas de optimización (más que 5, máximo rendimiento)
+-optimizationpasses 7
 
-# ============================
-# Plugins Capacitor que usas
-# ============================
--keep class com.capacitorjs.plugins.app.** { *; }
--keep class com.capacitorjs.plugins.localnotifications.** { *; }
--keep class com.capacitorjs.plugins.pushnotifications.** { *; }
+# Permite modificar el acceso a métodos y clases (public -> private) para ofuscar mejor
+-allowaccessmodification
 
-# ============================
-# Firebase (Messaging + Analytics + BOM)
-# ============================
--keep class com.google.firebase.** { *; }
--keep class com.google.firebase.messaging.** { *; }
--keepclassmembers class com.google.firebase.messaging.FirebaseMessagingService {
-    public void onMessageReceived(com.google.firebase.messaging.RemoteMessage);
-    public void onNewToken(java.lang.String);
-}
--dontwarn com.google.firebase.**
+# Renombra todos los paquetes a un nombre muy corto (ofuscación máxima)
+# Cambia 'com.eusebiodev.pickupliz' por 'a.b.c' en el código final
+-repackageclasses ''
 
-# ============================
-# capacitor-firebase/messaging (community plugin)
-# ============================
--keep class io.capawesome.capacitorjs.plugins.firebase.messaging.** { *; }
--dontwarn io.capawesome.capacitorjs.plugins.firebase.**
+# Fusiona interfaces agresivamente (reduce el número de métodos)
+-mergeinterfacesaggressively
 
-# ============================
-# Google Play Services / GMS (dependencia transitiva de Firebase)
-# ============================
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.android.gms.**
+# Optimizaciones avanzadas: desactiva solo las que suelen dar problemas
+# Esto habilita casi todas las optimizaciones menos las que rompen reflexión
+-optimizations !code/simplification/arithmetic,!field/*,!class/merging/*,!code/allocation/variable
 
-# ============================
-# Reglas generales recomendadas por Google/AndroidX
-# ============================
--keepattributes Signature
--keepattributes *Annotation*
--keepattributes EnclosingMethod
--keepattributes InnerClasses
+# Elimina atributos de depuración (reduce aún más el tamaño)
+# ¡CUIDADO! Si usas Firebase Crashlytics, DEJA SourceFile y LineNumberTable
+# Si no usas Crashlytics, descomenta la siguiente línea:
+# -dontkeepattributes SourceFile,LineNumberTable
 
-# Evita que R8 elimine constructores usados por reflexión (Firebase/Gson los necesita)
--keepclassmembers class * {
-    public <init>(...);
-}
-
-# Mantén los modelos serializables si usas Gson/Moshi en algún plugin nativo
+# Si usas Crashlytics, mantenlas:
 -keepattributes SourceFile,LineNumberTable
--keep class * implements java.io.Serializable { *; }
+-keepattributes *Annotation*
 
-# ============================
-# Debug: si algo crashea en release, activa esto temporalmente
-# para ver el nombre de clase real en el stacktrace
-# ============================
-#-keepnames class **
+# ====================================
+# OFUSCACIÓN DE NOMBRES DE MÉTODOS
+# ====================================
+
+# Ofusca los nombres de los métodos nativos (los que usan JNI)
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Esto mantiene los nombres de las clases que usas en el manifiesto (Activity, Service)
+# pero ofusca todo lo demás al máximo
+-keep class com.eusebiodev.pickupliz.MainActivity { *; }
+-keep class com.eusebiodev.pickupliz.BuildConfig { *; }

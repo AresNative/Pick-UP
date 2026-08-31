@@ -561,11 +561,6 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             Retencion: 0,
         };
         await safeCall(() => PostInt({ table: "Venta", data: saleData }), "Intelisis Venta");
-        // Lanzamos las tres inserciones de encabezados en paralelo
-        await Promise.all([
-            safeCall(() => PostInt({ table: "Mov", data: movData }), "Intelisis Mov"),
-            safeCall(() => PostInt({ table: "Movimientos", data: movementsData }), "Intelisis Movimientos"),
-        ]);
 
         // --- 3. Preparar ítems para VentaD (usando el mapa de costos) ---
         const itemsForVentaD = items.map((item, index) => {
@@ -605,12 +600,14 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
             };
         });
 
-        // --- 4. Insertar todos los items en paralelo ---
-        await Promise.all(
-            itemsForVentaD.map((itemData, idx) =>
-                safeCall(() => PostInt({ table: "VentaD", data: itemData }), `Intelisis VentaD item ${idx + 1}`)
+        // Insertamos encabezados + todos los items en un solo Promise.all (ejecución paralela)
+        await Promise.all([
+             PostInt({ table: "Mov", data: movData }),
+             PostInt({ table: "Movimientos", data: movementsData }),
+            ...itemsForVentaD.map((itemData) =>
+                 PostInt({ table: "VentaD", data: itemData })
             )
-        );
+        ]);
     };
     const processIntelisisOrder = async (id: string): Promise<string> => {
         // ✅ VERIFICACIÓN: Asegurar que no hay proceso en curso
@@ -900,10 +897,6 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                                 <span>Subtotal</span>
                                 {formatValue(subtotal, "currency")}
                             </p>
-                            {/* <p className="flex justify-between">
-                                <span>Servicio</span>
-                                {formatValue(serviceFee, "currency")}
-                            </p> */}
                             <hr className="my-3" />
                             <p className="flex justify-between font-semibold">
                                 <span>Total</span>
@@ -912,7 +905,7 @@ const Checkout: React.FC<PageProps> = ({ onScroll }: PageProps) => {
                         </div>
 
                         {isProcessing && (
-                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[9999]">
                                 <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-xs w-full">
                                     <LottieAnimation src="/lottie/transportBlue.json" height={150} />
                                     <p className="mt-4 text-lg font-semibold text-gray-700">
@@ -980,7 +973,7 @@ interface FormSectionProps {
 }
 
 const FormSection: React.FC<FormSectionProps> = ({ title, formRef, formConfig, onSuccess }) => (
-    <div className="z-50 border-2 rounded-lg p-4">
+    <div className="z-50 border-2 rounded-lg p-4 z-2">
         <h2 className="font-bold text-lg mb-2">{title}</h2>
         <MainForm
             message_button=""
